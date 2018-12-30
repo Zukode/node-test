@@ -4,6 +4,9 @@ var bcrypt = require('bcrypt');
 // create a sequelize instance with our local postgres database information.
 var sequelize = new Sequelize('postgres://postgres@localhost:5432/ashish');
 
+// create schema if not present
+sequelize.createSchema('auth_system');
+
 // setup User model and its fields.
 var User = sequelize.define('users', {
     username: {
@@ -21,18 +24,19 @@ var User = sequelize.define('users', {
         allowNull: false
     }
 }, {
+    schema: 'auth_system',
     hooks: {
       beforeCreate: (user) => {
         const salt = bcrypt.genSaltSync();
         user.password = bcrypt.hashSync(user.password, salt);
       }
     },
-    instanceMethods: {
-      validPassword: function(password) {
-        return bcrypt.compareSync(password, this.password);
-      }
-    }    
+   
 });
+
+User.prototype.validPassword = function(password) {
+    return bcrypt.compareSync(password, this.password);
+  };
 
 // create all the defined tables in the specified database.
 sequelize.sync()
